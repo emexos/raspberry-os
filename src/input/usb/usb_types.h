@@ -1,6 +1,11 @@
 #ifndef USB_TYPES_H
 #define USB_TYPES_H
 
+// NULL definition
+#ifndef NULL
+#define NULL ((void*)0)
+#endif
+
 // USB speeds
 typedef enum {
     USB_SPEED_UNKNOWN = 0,

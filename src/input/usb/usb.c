@@ -3,6 +3,20 @@
 #include "xhci.h"
 #include "../../include/pcie.h"
 
+// NULL definition falls nicht im Header
+#ifndef NULL
+#define NULL ((void*)0)
+#endif
+
+// USB status info structure (missing from your files)
+typedef struct {
+    int initialized;
+    int xhci_initialized;
+    int pcie_device_count;
+    int usb_device_count;
+    unsigned int port_count;
+} usb_status_info_t;
+
 // Main USB subsystem initialization
 int usb_init(void) {
     // Initialize USB manager (which handles PCIe and XHCI initialization)
@@ -62,19 +76,8 @@ void usb_print_info(void (*print_func)(const char*)) {
     }
 
     // Print basic statistics
-    char buffer[128];
-
-    // Simple integer to string conversion (since we don't have sprintf)
-    int pcie_count = status.pcie_device_count;
-    int pcie_digits = 0;
-    int temp = pcie_count;
-    do {
-        temp /= 10;
-        pcie_digits++;
-    } while (temp > 0);
-
     print_func("PCIe devices found: ");
-    // Print number (simplified - would need proper formatting in real implementation)
+    int pcie_count = status.pcie_device_count;
     if (pcie_count == 0) print_func("0");
     else if (pcie_count == 1) print_func("1");
     else if (pcie_count == 2) print_func("2");

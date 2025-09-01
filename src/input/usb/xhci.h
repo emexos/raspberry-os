@@ -1,6 +1,11 @@
 #ifndef XHCI_H
 #define XHCI_H
 
+// NULL definition
+#ifndef NULL
+#define NULL ((void*)0)
+#endif
+
 // XHCI controller structure
 typedef struct {
     void *mmio_base;          // Base address of MMIO registers

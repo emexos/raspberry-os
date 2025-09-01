@@ -2,6 +2,11 @@
 #include "xhci.h"
 #include "../../include/pcie.h"
 
+// NULL definition falls nicht im Header
+#ifndef NULL
+#define NULL ((void*)0)
+#endif
+
 #define MAX_USB_DEVICES 16
 
 static usb_manager_t usb_manager;
@@ -75,7 +80,7 @@ int usb_manager_scan_devices(void) {
 
     // This would normally scan all XHCI ports for connected devices
     // For now, this is a placeholder implementation
-    uint32_t port_count = xhci_get_port_count();
+    unsigned int port_count = xhci_get_port_count();
 
     // Reset device count
     usb_manager.device_count = 0;
@@ -106,7 +111,7 @@ int usb_manager_get_device_count(void) {
     return usb_manager.device_count;
 }
 
-usb_device_t* usb_manager_find_device_by_class(uint8_t class_code) {
+usb_device_t* usb_manager_find_device_by_class(unsigned char class_code) {
     if (!usb_manager_initialized) {
         return NULL;
     }
@@ -120,7 +125,7 @@ usb_device_t* usb_manager_find_device_by_class(uint8_t class_code) {
     return NULL;
 }
 
-usb_device_t* usb_manager_find_device_by_vendor_product(uint16_t vendor_id, uint16_t product_id) {
+usb_device_t* usb_manager_find_device_by_vendor_product(unsigned short vendor_id, unsigned short product_id) {
     if (!usb_manager_initialized) {
         return NULL;
     }
@@ -135,7 +140,7 @@ usb_device_t* usb_manager_find_device_by_vendor_product(uint16_t vendor_id, uint
     return NULL;
 }
 
-int usb_manager_enumerate_device(uint8_t port_number) {
+int usb_manager_enumerate_device(unsigned char port_number) {
     if (!usb_manager_initialized || usb_manager.device_count >= MAX_USB_DEVICES) {
         return 0;
     }
@@ -178,7 +183,7 @@ int usb_manager_reset_device(usb_device_t *device) {
     return 1;
 }
 
-int usb_manager_configure_device(usb_device_t *device, uint8_t config_value) {
+int usb_manager_configure_device(usb_device_t *device, unsigned char config_value) {
     if (!usb_manager_initialized || !device) {
         return 0;
     }

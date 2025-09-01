@@ -2,6 +2,11 @@
 #include "../../include/pcie.h"
 #include "xhci.h"
 
+// NULL definition falls nicht im Header
+#ifndef NULL
+#define NULL ((void*)0)
+#endif
+
 // XHCI register offsets
 #define XHCI_CAP_CAPLENGTH      0x00
 #define XHCI_CAP_HCIVERSION     0x02
@@ -38,34 +43,34 @@
 static xhci_controller_t xhci_controller;
 static int xhci_initialized = 0;
 
-static uint32_t xhci_read_cap32(uint32_t offset) {
+static unsigned int xhci_read_cap32(unsigned int offset) {
     return mmio_read((long)(xhci_controller.cap_base + offset));
 }
 
-static uint32_t xhci_read_op32(uint32_t offset) {
+static unsigned int xhci_read_op32(unsigned int offset) {
     return mmio_read((long)(xhci_controller.op_base + offset));
 }
 
-static void xhci_write_op32(uint32_t offset, uint32_t value) {
+static void xhci_write_op32(unsigned int offset, unsigned int value) {
     mmio_write((long)(xhci_controller.op_base + offset), value);
 }
 
-static uint64_t xhci_read_op64(uint32_t offset) {
-    uint32_t low = xhci_read_op32(offset);
-    uint32_t high = xhci_read_op32(offset + 4);
-    return ((uint64_t)high << 32) | low;
+static unsigned long long xhci_read_op64(unsigned int offset) {
+    unsigned int low = xhci_read_op32(offset);
+    unsigned int high = xhci_read_op32(offset + 4);
+    return ((unsigned long long)high << 32) | low;
 }
 
-static void xhci_write_op64(uint32_t offset, uint64_t value) {
-    xhci_write_op32(offset, (uint32_t)(value & 0xFFFFFFFF));
-    xhci_write_op32(offset + 4, (uint32_t)(value >> 32));
+static void xhci_write_op64(unsigned int offset, unsigned long long value) {
+    xhci_write_op32(offset, (unsigned int)(value & 0xFFFFFFFF));
+    xhci_write_op32(offset + 4, (unsigned int)(value >> 32));
 }
 
 static int xhci_wait_for_ready(void) {
     int timeout = 1000;
 
     while (timeout-- > 0) {
-        uint32_t status = xhci_read_op32(XHCI_OP_USBSTS);
+        unsigned int status = xhci_read_op32(XHCI_OP_USBSTS);
         if (!(status & XHCI_STS_CNR)) {
             return 1;  // Controller is ready
         }
@@ -79,14 +84,14 @@ static int xhci_wait_for_ready(void) {
 
 static int xhci_reset_controller(void) {
     // Set halt bit
-    uint32_t cmd = xhci_read_op32(XHCI_OP_USBCMD);
+    unsigned int cmd = xhci_read_op32(XHCI_OP_USBCMD);
     cmd &= ~XHCI_CMD_RUN;
     xhci_write_op32(XHCI_OP_USBCMD, cmd);
 
     // Wait for halt
     int timeout = 1000;
     while (timeout-- > 0) {
-        uint32_t status = xhci_read_op32(XHCI_OP_USBSTS);
+        unsigned int status = xhci_read_op32(XHCI_OP_USBSTS);
         if (status & XHCI_STS_HCH) {
             break;
         }
@@ -120,8 +125,8 @@ static int xhci_reset_controller(void) {
 }
 
 static void xhci_setup_scratchpad_buffers(void) {
-    uint32_t hcsparams2 = xhci_read_cap32(XHCI_CAP_HCSPARAMS2);
-    uint32_t max_scratchpad_bufs = ((hcsparams2 & 0x03E00000) >> 21) |
+    unsigned int hcsparams2 = xhci_read_cap32(XHCI_CAP_HCSPARAMS2);
+    unsigned int max_scratchpad_bufs = ((hcsparams2 & 0x03E00000) >> 21) |
                                    (((hcsparams2 & 0xF8000000) >> 27) << 5);
 
     xhci_controller.max_scratchpad_bufs = max_scratchpad_bufs;
@@ -149,34 +154,34 @@ int xhci_init(void) {
     }
 
     // Map BAR0 (memory mapped registers)
-    uint32_t bar0 = xhci_device->bars[0];
+    unsigned int bar0 = xhci_device->bars[0];
     if (!(bar0 & 0x1)) {  // Memory BAR
-        xhci_controller.mmio_base = (void *)(uintptr_t)(bar0 & ~0xF);
+        xhci_controller.mmio_base = (void *)(unsigned long)(bar0 & ~0xF);
     } else {
         return 0;  // We need memory mapped I/O
     }
 
     // Enable bus master and memory space
-    uint32_t cmd_reg = pcie_device_read_config32(xhci_device, 0x04);
+    unsigned int cmd_reg = pcie_device_read_config32(xhci_device, 0x04);
     cmd_reg |= 0x06;  // Bus Master + Memory Space Enable
     pcie_device_write_config32(xhci_device, 0x04, cmd_reg);
 
     // Setup capability and operational register bases
     xhci_controller.cap_base = xhci_controller.mmio_base;
-    uint8_t cap_length = *(uint8_t*)xhci_controller.cap_base;
-    xhci_controller.op_base = (uint8_t*)xhci_controller.cap_base + cap_length;
+    unsigned char cap_length = *(unsigned char*)xhci_controller.cap_base;
+    xhci_controller.op_base = (unsigned char*)xhci_controller.cap_base + cap_length;
 
     // Read capability parameters
-    uint32_t hcsparams1 = xhci_read_cap32(XHCI_CAP_HCSPARAMS1);
+    unsigned int hcsparams1 = xhci_read_cap32(XHCI_CAP_HCSPARAMS1);
     xhci_controller.max_slots = hcsparams1 & 0xFF;
     xhci_controller.max_interrupters = (hcsparams1 >> 8) & 0x7FF;
     xhci_controller.max_ports = (hcsparams1 >> 24) & 0xFF;
 
-    uint32_t hcsparams2 = xhci_read_cap32(XHCI_CAP_HCSPARAMS2);
+    unsigned int hcsparams2 = xhci_read_cap32(XHCI_CAP_HCSPARAMS2);
     xhci_controller.max_scratchpad_bufs = ((hcsparams2 & 0x03E00000) >> 21) |
                                          (((hcsparams2 & 0xF8000000) >> 27) << 5);
 
-    uint32_t hccparams1 = xhci_read_cap32(XHCI_CAP_HCCPARAMS1);
+    unsigned int hccparams1 = xhci_read_cap32(XHCI_CAP_HCCPARAMS1);
     xhci_controller.context_size = (hccparams1 & 0x04) ? 64 : 32;
 
     // Reset the controller
@@ -188,7 +193,7 @@ int xhci_init(void) {
     xhci_setup_scratchpad_buffers();
 
     // Set max device slots
-    uint32_t config = xhci_read_op32(XHCI_OP_CONFIG);
+    unsigned int config = xhci_read_op32(XHCI_OP_CONFIG);
     config &= ~0xFF;
     config |= xhci_controller.max_slots;
     xhci_write_op32(XHCI_OP_CONFIG, config);
@@ -203,14 +208,14 @@ int xhci_start(void) {
     }
 
     // Enable interrupts and start the controller
-    uint32_t cmd = xhci_read_op32(XHCI_OP_USBCMD);
+    unsigned int cmd = xhci_read_op32(XHCI_OP_USBCMD);
     cmd |= XHCI_CMD_RUN | XHCI_CMD_INTE;
     xhci_write_op32(XHCI_OP_USBCMD, cmd);
 
     // Wait for controller to start
     int timeout = 1000;
     while (timeout-- > 0) {
-        uint32_t status = xhci_read_op32(XHCI_OP_USBSTS);
+        unsigned int status = xhci_read_op32(XHCI_OP_USBSTS);
         if (!(status & XHCI_STS_HCH)) {
             return 1;  // Controller is running
         }
@@ -226,14 +231,14 @@ int xhci_stop(void) {
     }
 
     // Stop the controller
-    uint32_t cmd = xhci_read_op32(XHCI_OP_USBCMD);
+    unsigned int cmd = xhci_read_op32(XHCI_OP_USBCMD);
     cmd &= ~XHCI_CMD_RUN;
     xhci_write_op32(XHCI_OP_USBCMD, cmd);
 
     // Wait for halt
     int timeout = 1000;
     while (timeout-- > 0) {
-        uint32_t status = xhci_read_op32(XHCI_OP_USBSTS);
+        unsigned int status = xhci_read_op32(XHCI_OP_USBSTS);
         if (status & XHCI_STS_HCH) {
             return 1;  // Controller halted
         }
@@ -250,7 +255,7 @@ xhci_controller_t* xhci_get_controller(void) {
     return &xhci_controller;
 }
 
-uint32_t xhci_get_port_count(void) {
+unsigned int xhci_get_port_count(void) {
     return xhci_controller.max_ports;
 }
 

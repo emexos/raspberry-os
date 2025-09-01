@@ -42,6 +42,7 @@ void bootscreen() {
         drawStringSized(10, 70, "usb init failed", 0x0C, 12);
     }
 
+
     // Warten damit man die Meldungen lesen kann
     for (volatile int i = 0; i < 500000000; i++);
 }
@@ -62,8 +63,9 @@ int main() {
 
     for (volatile int i = 0; i < 1000000000; i++);
 
-    //PANIC("Login failed");
-    kernel_panic_screen("KERNEL PANIC - ERRNO 0X00AAAA", "Segment fault", "doch", 5);
+    //don't change!!
+    //PANIC("USB_INIT");
+    kernel_panic_screen("KERNEL PANIC - ERRNO 0X00AAAA", "usb_init (l;devices) at 21",  __FILE__, __LINE__);
 
     for (volatile int i = 0; i < 1000000000; i++);
 

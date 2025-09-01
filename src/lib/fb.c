@@ -63,6 +63,7 @@ void fb_init()
         isrgb = mbox[24];       // Pixel order
         fb = (unsigned char *)((long)mbox[28]);
     }
+
 }
 
 int getFontPixel(char c, int x, int y) {

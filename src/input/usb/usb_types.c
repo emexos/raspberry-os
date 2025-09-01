@@ -41,7 +41,7 @@ const char* usb_get_speed_name(usb_speed_t speed) {
     return usb_speed_names[speed];
 }
 
-const char* usb_get_class_name(uint8_t class_code) {
+const char* usb_get_class_name(unsigned char class_code) {
     if (class_code <= 0x12) {
         return usb_class_names[class_code];
     } else if (class_code == 0xDC) {
@@ -59,7 +59,7 @@ const char* usb_get_class_name(uint8_t class_code) {
     }
 }
 
-int usb_is_valid_descriptor_type(uint8_t type) {
+int usb_is_valid_descriptor_type(unsigned char type) {
     switch (type) {
         case USB_DESC_DEVICE:
         case USB_DESC_CONFIGURATION:
@@ -82,7 +82,7 @@ int usb_is_valid_descriptor_type(uint8_t type) {
     }
 }
 
-uint16_t usb_calculate_max_packet_size(usb_speed_t speed, usb_endpoint_type_t type) {
+unsigned short usb_calculate_max_packet_size(usb_speed_t speed, usb_endpoint_type_t type) {
     switch (speed) {
         case USB_SPEED_LOW:
             if (type == USB_ENDPOINT_CONTROL || type == USB_ENDPOINT_INTERRUPT) {
